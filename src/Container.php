@@ -4,7 +4,7 @@ namespace OpxCore\Container;
 
 use OpxCore\Container\Exceptions\ContainerException;
 use OpxCore\Container\Exceptions\NotFoundException;
-use OpxCore\Container\Interfaces\Container as ContainerInterface;
+use OpxCore\Interfaces\ContainerInterface;
 
 class Container implements ContainerInterface
 {
@@ -46,7 +46,7 @@ class Container implements ContainerInterface
     /**
      * Get container.
      *
-     * @return  \OpxCore\Container\Interfaces\Container|static
+     * @return  \OpxCore\Interfaces\ContainerInterface|static
      */
     public static function getContainer()
     {
@@ -60,9 +60,9 @@ class Container implements ContainerInterface
     /**
      * Set container.
      *
-     * @param  \OpxCore\Container\Interfaces\Container|null $container
+     * @param  \OpxCore\Interfaces\ContainerInterface|null $container
      *
-     * @return  \OpxCore\Container\Interfaces\Container|static
+     * @return  \OpxCore\Interfaces\ContainerInterface|static
      */
     public static function setContainer($container = null)
     {
@@ -157,7 +157,7 @@ class Container implements ContainerInterface
      *
      * @return  bool
      */
-    public function has($id)
+    public function has($id): bool
     {
         return isset($this->bindings[$id]) || isset($this->aliases[$id]) || isset($this->instances[$id]);
     }

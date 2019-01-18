@@ -15,7 +15,8 @@
     ],
     "require": {
         "php": "^7.1.3",
-        "psr/container": "^1.0"
+        "psr/container": "^1.0",
+        "opxcore/interfaces": "dev-master"
     },
     "autoload": {
         "psr-4": {
