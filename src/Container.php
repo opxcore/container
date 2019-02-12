@@ -419,8 +419,8 @@ class Container implements ContainerInterface
 
             return $reflector->newInstanceArgs($resolved);
 
-        } catch (\ReflectionException $exception) {
-            throw new NotFoundException("Unable to resolve [{$concrete}]. {$exception->getMessage()}");
+        } catch (\ReflectionException|ContainerException $exception) {
+            throw new NotFoundException("Unable to resolve [{$concrete}]. {$exception->getMessage()}", 0, $exception);
         }
     }
 
