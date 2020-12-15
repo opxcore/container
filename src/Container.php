@@ -4,51 +4,54 @@ namespace OpxCore\Container;
 
 use OpxCore\Container\Exceptions\ContainerException;
 use OpxCore\Container\Exceptions\NotFoundException;
-use OpxCore\Interfaces\ContainerInterface;
+use OpxCore\Container\Interfaces\ContainerInterface;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionParameter;
 
 class Container implements ContainerInterface
 {
     /**
      * The current container.
      *
-     * @var  static
+     * @var Container|null
      */
-    protected static $container;
+    protected static ?Container $container = null;
 
     /**
      * The container's bindings.
      *
      * @var  array
      */
-    protected $bindings = [];
+    protected array $bindings = [];
 
     /**
      * The container's instances.
      *
      * @var  array
      */
-    protected $instances = [];
+    protected array $instances = [];
 
     /**
      * The registered aliases.
      *
      * @var  array
      */
-    protected $aliases = [];
+    protected array $aliases = [];
 
     /**
      * The parameters for contextual binding.
      *
      * @var  array
      */
-    protected $parameters = [];
+    protected array $parameters = [];
 
     /**
      * Get container.
      *
-     * @return  \OpxCore\Interfaces\ContainerInterface|static
+     * @return  Container|static
      */
-    public static function getContainer()
+    public static function getContainer(): self
     {
         if (static::$container === null) {
             static::$container = new static;
@@ -60,11 +63,11 @@ class Container implements ContainerInterface
     /**
      * Set container.
      *
-     * @param  \OpxCore\Interfaces\ContainerInterface|null $container
+     * @param Container|null $container
      *
-     * @return  \OpxCore\Interfaces\ContainerInterface|static
+     * @return  Container|static
      */
-    public static function setContainer($container = null)
+    public static function setContainer(?Container $container = null): ?Container
     {
         return static::$container = $container;
     }
@@ -72,13 +75,13 @@ class Container implements ContainerInterface
     /**
      * Register a binding in the container.
      *
-     * @param  string $abstract
-     * @param  \Closure|string|null $concrete
-     * @param  \Closure|array|null $parameters
+     * @param string $abstract
+     * @param callable|string|null $concrete
+     * @param callable|array|null $parameters
      *
      * @return  $this
      */
-    public function bind($abstract, $concrete = null, $parameters = null): ContainerInterface
+    public function bind(string $abstract, $concrete = null, $parameters = null): Container
     {
         $this->makeBinding($abstract, $concrete, $parameters, false);
 
@@ -88,13 +91,13 @@ class Container implements ContainerInterface
     /**
      * Register a singleton binding in the container.
      *
-     * @param  string $abstract
-     * @param  \Closure|string|null $concrete
-     * @param  \Closure|array|null $parameters
+     * @param string $abstract
+     * @param callable|string|null $concrete
+     * @param callable|array|null $parameters
      *
      * @return  $this
      */
-    public function singleton($abstract, $concrete = null, $parameters = null): ContainerInterface
+    public function singleton(string $abstract, $concrete = null, $parameters = null): Container
     {
         $this->makeBinding($abstract, $concrete, $parameters, true);
 
@@ -104,12 +107,12 @@ class Container implements ContainerInterface
     /**
      * Alias a type to a different name.
      *
-     * @param  string $abstract
-     * @param  string $alias
+     * @param string $abstract
+     * @param string $alias
      *
-     * @return  $this
+     * @return  Container
      */
-    public function alias($abstract, $alias): ContainerInterface
+    public function alias(string $abstract, string $alias): Container
     {
         $this->aliases[$alias] = $abstract;
 
@@ -119,12 +122,12 @@ class Container implements ContainerInterface
     /**
      * Register an existing instance as singleton in the container.
      *
-     * @param  string $abstract
-     * @param  mixed $instance
+     * @param string $abstract
+     * @param mixed $instance
      *
-     * @return  $this
+     * @return  Container
      */
-    public function instance($abstract, $instance): ContainerInterface
+    public function instance(string $abstract, $instance): Container
     {
         $this->instances[$abstract] = $instance;
 
@@ -136,10 +139,10 @@ class Container implements ContainerInterface
      *
      * @param string $id Identifier of the entry to look for.
      *
-     * @throws  \Psr\Container\NotFoundExceptionInterface  No entry was found for **this** identifier.
-     * @throws  \Psr\Container\ContainerExceptionInterface Error while retrieving the entry.
-     *
      * @return  mixed Entry.
+     *
+     * @throws  ContainerException Error while retrieving the entry.
+     * @throws  NotFoundException  No entry was found for identifier.
      */
     public function get($id)
     {
@@ -153,7 +156,7 @@ class Container implements ContainerInterface
      * `has($id)` returning true does not mean that `get($id)` will not throw an exception.
      * It does however mean that `get($id)` will not throw a `NotFoundExceptionInterface`.
      *
-     * @param  string $id Identifier of the entry to look for.
+     * @param string $id Identifier of the entry to look for.
      *
      * @return  bool
      */
@@ -165,14 +168,14 @@ class Container implements ContainerInterface
     /**
      * Make binding to this container.
      *
-     * @param  string $abstract
-     * @param  string|\Closure|null $concrete
-     * @param  array|\Closure|null $parameters
-     * @param  bool $singleton
+     * @param string $abstract
+     * @param string|callable|null $concrete
+     * @param array|callable|null $parameters
+     * @param bool $singleton
      *
      * @return  void
      */
-    protected function makeBinding($abstract, $concrete, $parameters, $singleton): void
+    protected function makeBinding(string $abstract, $concrete, $parameters, bool $singleton): void
     {
         $this->forget($abstract);
 
@@ -181,8 +184,8 @@ class Container implements ContainerInterface
             $concrete = $abstract;
         }
 
-        if (!$concrete instanceof \Closure) {
-            // If concrete is not a Closure, it means we are binding a class name into this
+        if (!is_callable($concrete)) {
+            // If concrete is not a callable, it means we are binding a class name into this
             // container to the abstract type and we will wrap it up inside its own Closure
             // to get more convenience when extending.
             $concrete = $this->makeClosure($abstract, $concrete);
@@ -198,11 +201,11 @@ class Container implements ContainerInterface
     /**
      * Drop all of the stale instances and aliases.
      *
-     * @param  string $abstract
+     * @param string $abstract
      *
      * @return  void
      */
-    public function forget($abstract): void
+    public function forget(string $abstract): void
     {
         unset($this->instances[$abstract], $this->aliases[$abstract]);
     }
@@ -210,15 +213,15 @@ class Container implements ContainerInterface
     /**
      * Get the Closure to be used when building a type.
      *
-     * @param  string $abstract
-     * @param  string $concrete
+     * @param string $abstract
+     * @param string $concrete
      *
-     * @return  \Closure
+     * @return  callable
      */
-    protected function makeClosure($abstract, $concrete): \Closure
+    protected function makeClosure(string $abstract, string $concrete): callable
     {
-        return function ($container, $parameters) use ($abstract, $concrete) {
-            /** @var \OpxCore\Container\Container $container */
+        return static function ($container, $parameters) use ($abstract, $concrete) {
+            /** @var Container $container */
             if ($abstract === $concrete) {
                 return $container->build($concrete, $parameters);
             }
@@ -230,14 +233,14 @@ class Container implements ContainerInterface
     /**
      * Define a contextual binding.
      *
-     * @param  string|array $abstract
-     * @param  \Closure|array $parameters
+     * @param string|array $concrete
+     * @param callable|array $parameters
      *
      * @return  $this
      */
-    public function bindParameters($abstract, $parameters): ContainerInterface
+    public function bindParameters($concrete, $parameters): ContainerInterface
     {
-        $this->parameters[$abstract] = $parameters;
+        $this->parameters[$concrete] = $parameters;
 
         return $this;
     }
@@ -245,15 +248,15 @@ class Container implements ContainerInterface
     /**
      * Resolve the given type from the container.
      *
-     * @param  string $abstract
-     * @param  array|\Closure|null $parameters
+     * @param string $abstract
+     * @param array|callable|null $parameters
      *
      * @return  mixed
      *
-     * @throws  \OpxCore\Container\Exceptions\ContainerException
-     * @throws  \OpxCore\Container\Exceptions\NotFoundException
+     * @throws ContainerException
+     * @throws NotFoundException
      */
-    public function make($abstract, $parameters = null)
+    public function make(string $abstract, $parameters = null)
     {
         $abstract = $this->getAlias($abstract);
 
@@ -272,11 +275,7 @@ class Container implements ContainerInterface
         // We're ready to instantiate an instance of the concrete type registered for
         // the binding. This will instantiate the types, as well as resolve any of
         // its "nested" dependencies recursively until all have gotten resolved.
-        if ($this->canBuild($concrete, $abstract)) {
-            $object = $this->build($concrete, $parameters);
-        } else {
-            $object = $this->make($concrete);
-        }
+        $object = $this->canBuild($concrete, $abstract) ? $this->build($concrete, $parameters) : $this->make($concrete);
 
         // If the requested type is registered as a singleton we'll want to cache off
         // the instances in "memory" so we can return it later without creating an
@@ -291,11 +290,11 @@ class Container implements ContainerInterface
     /**
      * Check if abstract was registered as singleton.
      *
-     * @param  string $abstract
+     * @param string $abstract
      *
      * @return  bool
      */
-    private function isSingleton($abstract): bool
+    private function isSingleton(string $abstract): bool
     {
         return isset($this->bindings[$abstract]) && $this->bindings[$abstract]['singleton'];
     }
@@ -303,13 +302,13 @@ class Container implements ContainerInterface
     /**
      * Get the alias for an abstract if available.
      *
-     * @param  string $abstract
+     * @param string $abstract
      *
      * @return  string
      *
-     * @throws  \OpxCore\Container\Exceptions\ContainerException
+     * @throws ContainerException
      */
-    private function getAlias($abstract): string
+    private function getAlias(string $abstract): string
     {
         if (!isset($this->aliases[$abstract])) {
             return $abstract;
@@ -325,12 +324,12 @@ class Container implements ContainerInterface
     /**
      * Resolve contextual parameters for abstract.
      *
-     * @param  string $abstract
-     * @param  array|\Closure|null $parameters
+     * @param string $abstract
+     * @param array|callable|null $parameters
      *
      * @return  array
      */
-    private function resolveParameters($abstract, $parameters): array
+    private function resolveParameters(string $abstract, $parameters): array
     {
         $resolved = [];
 
@@ -348,13 +347,13 @@ class Container implements ContainerInterface
     /**
      * Resolve parameters closure.
      *
-     * @param  \Closure|array $parameters
+     * @param callable|array $parameters
      *
      * @return  array
      */
     private function resolveParametersClosure($parameters): array
     {
-        return $parameters instanceof \Closure
+        return is_callable($parameters)
             ? $parameters($this)
             : $parameters;
     }
@@ -362,37 +361,37 @@ class Container implements ContainerInterface
     /**
      * Determine if the given concrete is buildable.
      *
-     * @param  mixed $concrete
-     * @param  string $abstract
+     * @param mixed $concrete
+     * @param string $abstract
      *
      * @return  bool
      */
-    private function canBuild($concrete, $abstract): bool
+    private function canBuild($concrete, string $abstract): bool
     {
-        return $concrete === $abstract || $concrete instanceof \Closure;
+        return $concrete === $abstract || is_callable($concrete);
     }
 
     /**
      * Instantiate a concrete instance of the given type.
      *
-     * @param  string|\Closure $concrete
-     * @param  array $parameters
+     * @param string|callable $concrete
+     * @param array $parameters
      *
      * @return  mixed
      *
-     * @throws  ContainerException
-     * @throws  NotFoundException
+     * @throws ContainerException
+     * @throws NotFoundException
      */
-    private function build($concrete, $parameters)
+    private function build($concrete, array $parameters)
     {
         // If the concrete type is a Closure, we will just execute it and return
         // back the result.
-        if ($concrete instanceof \Closure) {
+        if (is_callable($concrete)) {
             return $concrete($this, $parameters);
         }
 
         try {
-            $reflector = new \ReflectionClass($concrete);
+            $reflector = new ReflectionClass($concrete);
 
             // If the type is not instantiable, the developer is attempting to resolve
             // an abstract type such as an Interface or Abstract Class and there is
@@ -419,7 +418,7 @@ class Container implements ContainerInterface
 
             return $reflector->newInstanceArgs($resolved);
 
-        } catch (\ReflectionException|ContainerException $exception) {
+        } catch (ReflectionException $exception) {
             throw new NotFoundException("Unable to resolve [{$concrete}]. {$exception->getMessage()}", 0, $exception);
         }
     }
@@ -427,27 +426,28 @@ class Container implements ContainerInterface
     /**
      * Resolve all of the dependencies from the ReflectionParameters.
      *
-     * @param  array $dependencies
-     * @param  array $parameters
+     * @param array $dependencies
+     * @param array $parameters
      *
      * @return  array
      *
-     * @throws  \OpxCore\Container\Exceptions\ContainerException
-     * @throws  \OpxCore\Container\Exceptions\NotFoundException
+     * @throws  ContainerException
+     * @throws  NotFoundException
+     * @throws ReflectionException
      */
     private function resolveDependencies(array $dependencies, array $parameters): array
     {
         $results = [];
 
         foreach ($dependencies as $dependency) {
+            /** @var ReflectionParameter $dependency */
             if (isset($parameters[$dependency->name])) {
-                // If this dependency has a override for this build we will use it
-                // as the value.
+                // If this dependency has a override for this build we will use it as the value.
                 $results[] = $parameters[$dependency->name];
 
             } elseif ($dependency->getClass() !== null) {
                 // If class is not null, it means we must to resolve dependency injection
-                $results[] = $this->resolveClass($dependency);
+                $results[] = $this->resolveClass($dependency, $parameters);
 
             } elseif ($dependency->isDefaultValueAvailable()) {
                 // If we goes here, a dependency is a string or some other primitive
@@ -466,29 +466,29 @@ class Container implements ContainerInterface
     /**
      * Resolve a class based dependency from the container.
      *
-     * @param  \ReflectionParameter $parameter
+     * @param ReflectionParameter $parameter
+     * @param array $parameters
      *
      * @return  mixed
      *
-     * @throws  \OpxCore\Container\Exceptions\ContainerException
-     * @throws  \OpxCore\Container\Exceptions\NotFoundException
+     * @throws ContainerException
+     * @throws NotFoundException
      */
-    protected function resolveClass(\ReflectionParameter $parameter)
+    protected function resolveClass(ReflectionParameter $parameter, array $parameters)
     {
+        $name = $parameter->getClass()->name;
+
+        $name = $parameters[$name] ?? $name;
+
         try {
-            return $this->make($parameter->getClass()->name);
+            return $this->make($name);
         } catch (ContainerException $exception) {
-            // If we can not resolve the class instance, we will check to see if the value
-            // has default value.
+            // If we can not resolve the class instance, we will check to see if the value has default value.
             try {
-                if ($parameter->isDefaultValueAvailable()) {
-                    return $parameter->getDefaultValue();
-                }
-            } catch (\ReflectionException $exception) {
+                return $parameter->getDefaultValue();
+            } catch (ReflectionException $exception) {
                 throw new ContainerException($exception->getMessage());
             }
-
-            throw $exception;
         }
     }
 }

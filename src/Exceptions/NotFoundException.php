@@ -3,9 +3,9 @@
 namespace OpxCore\Container\Exceptions;
 
 use Exception;
-use Psr\Container\NotFoundExceptionInterface;
+use OpxCore\Container\Interfaces\NotFoundExceptionInterface;
 
 class NotFoundException extends Exception implements NotFoundExceptionInterface
 {
-    //
+
 }
