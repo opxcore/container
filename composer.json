@@ -2,10 +2,10 @@
     "name": "opxcore/container",
     "description": "The OpxCore dependency injection container.",
     "license": "MIT",
-    "homepage": "https://opxcms.com",
+    "homepage": "https://opxcore.com",
     "support": {
-        "issues": "https://github.com/opxcore/container/issues",
-        "source": "https://github.com/opxcore/container"
+        "source": "https://github.com/opxcore/container",
+        "issues": "https://github.com/opxcore/container/issues"
     },
     "authors": [
         {
@@ -14,22 +14,22 @@
         }
     ],
     "require": {
-        "php": "^7.1.3",
-        "psr/container": "^1.0",
-        "opxcore/interfaces": "^0.1.9"
+        "php": "^7.4",
+        "opxcore/container-interface": "^1.0.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~9.1.5"
     },
     "autoload": {
         "psr-4": {
             "OpxCore\\Container\\": "src"
         }
     },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "0.2-dev"
+    "autoload-dev": {
+        "psr-4": {
+            "OpxCore\\Tests\\Container\\": "tests/"
         }
     },
-    "config": {
-        "sort-packages": true
-    },
+    "prefer-stable": true,
     "minimum-stability": "dev"
 }
