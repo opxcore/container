@@ -1,6 +1,120 @@
 # Dependency injection container
+
 [![Build Status](https://www.travis-ci.com/opxcore/container.svg?branch=master)](https://www.travis-ci.com/opxcore/container)
 [![Coverage Status](https://coveralls.io/repos/github/opxcore/container/badge.svg?branch=master)](https://coveralls.io/github/opxcore/container?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/opxcore/container/v/stable)](https://packagist.org/packages/opxcore/container)
 [![Total Downloads](https://poser.pugx.org/opxcore/container/downloads)](https://packagist.org/packages/opxcore/container)
 [![License](https://poser.pugx.org/opxcore/container/license)](https://packagist.org/packages/opxcore/container)
+
+# Introduction
+
+The dependency injection container is a powerful tool for managing class dependencies and performing dependency
+injection. Class dependencies are "injected" into the class via the constructor and resolved by the container.
+
+### Example:
+
+```
+class Controller
+{
+    protected $repository;
+    
+    public function __construct(Repository $repository)
+    {
+        $this->repository = $repository;
+    }
+}
+```
+
+Calling `$container->make(Controller::class)` would be equal to `new Controller(new Repository)`. This amazing feature
+resolves all dependency injections automatically with _zero-config_. For this example if
+`Repository` have its own dependency, it will be resolved the same.
+
+# Installing
+
+`composer require opxcore/container`
+
+# Creating
+
+You can create a container several ways:
+`$container = Container::setContainer(new Container)` or
+`$container = Container::getContainer()`.
+
+In all of this cases `Container::getContainer()` will always return the same container instance.
+
+If you want to create and handle a container (or several containers) by yourself just use `$container = new Container`
+and handle this container instance as you want.
+
+# Registering a binding with the container
+
+Basic binding to container looks like:
+
+```
+$container->bind($abstract, $concrete, $parameters);
+```
+
+`$abstract` is a string containing class name or shorthand for a name to be resolved.
+
+`$concrete` is a string containing class name or `callable` returning object for a name to be resolved to. Container
+instance and parameters will be passed to callable during resolving.
+
+`$parameters` is an array or callable returning array with parameters used for resolving (see below). Default 
+value is `null` means no parameters will be bound.
+
+## Examples:
+###Simple usage
+```
+$container->bind('logger', Logger::class);
+
+// New instance of Logger with resolved dependencies will be retuened.
+$logger = $container->make('logger');
+```
+### Binding interfaces to its realizations
+We have `Controller` class what depends on some `RepositoryInterface` and `FileRepository` implementing it:
+```
+class Controller
+{
+    protected RepositoryInterface $repository;
+    
+    public function __construct(RepositoryInterface $repository)
+    {
+        $this->repository = $repository;
+    }
+}
+```
+```
+class FileRepository implements RepositoryInterface
+{
+    protected string $path;
+    
+    public function __construct(string $path)
+    {
+        $this->path = $path;
+    }
+}
+```
+There ara several ways to realize that:
+1. Bind `FileRepository::class` to `RepositoryInterface::class` so than some class depends on `RepositoryInterface`
+it will be resolved to `FileRepository` and `path` argument will be passed into with specified value.
+```
+$container->bind(RepositoryInterface::class, FileRepository::class, ['path'=>'/data/storage']);
+
+$controller = $container->make(Controller::class);
+```
+
+## Bind
+
+## Singleton
+
+## Alias
+
+## Instance
+
+# Resolving
+
+## make
+
+order:
+
+1. Check for alias
+2. Check for instance
+3. Making
