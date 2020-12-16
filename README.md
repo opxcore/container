@@ -16,7 +16,7 @@ injection. Class dependencies are "injected" into the class via the constructor 
 ```php
 class Controller
 {
-    protected $repository;
+    protected Repository $repository;
     
     public function __construct(Repository $repository)
     {
@@ -36,13 +36,18 @@ resolves all dependency injections automatically with _zero-config_. For this ex
 # Creating
 
 You can create a container several ways:
-`$container = Container::setContainer(new Container)` or
-`$container = Container::getContainer()`.
+```php
+$container = Container::setContainer(new Container);
+``` 
+or
+```php
+$container = Container::getContainer();
+```
 
 In all of this cases `Container::getContainer()` will always return the same container instance.
 
-If you want to create and handle a container (or several containers) by yourself just use `$container = new Container`
-and handle this container instance as you want.
+If you want to create and handle a container (or several containers) by yourself just use 
+`$container = new Container` and handle this container instance as you want.
 
 # Registering a binding with the container
 
@@ -107,7 +112,8 @@ on subsequent calls into the container.
 ```php
 $container->singleton(RepositoryInterface::class, FileRepository::class, ['path'=>'/data/storage']);
 
-// Each time when RepositoryInterface needs to be resolved the instance of FileRepository will be given.
+// Each time when RepositoryInterface needs to be resolved
+// the instance of FileRepository would be given.
 $controller = $container->make(RepositoryInterface::class);
 ```
 
