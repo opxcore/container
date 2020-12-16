@@ -275,7 +275,7 @@ class ContainerTest extends TestCase
         /** @var Fixture $fixture */
         $container = new Container;
         $container->bind('fixture', static function (Container $container, $parameters) {
-            return new Fixture($container->make(Dependency::class, ['info' => 'test']));
+            return new Fixture($container->make(Dependency::class, $parameters));
         }, ['info' => 'test']);
         $fixture = $container->get('fixture');
         self::assertEquals('test', $fixture->dependency->info);
@@ -363,6 +363,26 @@ class ContainerTest extends TestCase
 
         $fixture->dependency->info = 'singleton test';
         $fixture = $container->get('fixture');
+        self::assertEquals('singleton test', $fixture->dependency->info);
+    }
+
+    /**
+     * Singleton not created.
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    public function testGetSingletonNotCreatedDirect(): void
+    {
+        /** @var Fixture $fixture */
+        $container = new Container;
+        $container->singleton(Fixture::class);
+        $container->bind(DependencyInterface::class, Dependency::class);
+        $fixture = $container->get(Fixture::class);
+        self::assertEquals('default', $fixture->dependency->info);
+
+        $fixture->dependency->info = 'singleton test';
+        $fixture = $container->get(Fixture::class);
         self::assertEquals('singleton test', $fixture->dependency->info);
     }
 
