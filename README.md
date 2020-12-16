@@ -13,7 +13,7 @@ injection. Class dependencies are "injected" into the class via the constructor 
 
 ### Example:
 
-```
+```php
 class Controller
 {
     protected $repository;
@@ -48,7 +48,7 @@ and handle this container instance as you want.
 
 Basic binding to container looks like:
 
-```
+```php
 $container->bind($abstract, $concrete, $parameters);
 ```
 
@@ -61,8 +61,8 @@ instance and parameters will be passed to callable during resolving.
 value is `null` means no parameters will be bound.
 
 ## Examples:
-###Simple usage
-```
+### Simple usage
+```php
 $container->bind('logger', Logger::class);
 
 // New instance of Logger with resolved dependencies will be retuened.
@@ -70,7 +70,7 @@ $logger = $container->make('logger');
 ```
 ### Binding interfaces to its realizations
 We have `Controller` class what depends on some `RepositoryInterface` and `FileRepository` implementing it:
-```
+```php
 class Controller
 {
     protected RepositoryInterface $repository;
@@ -81,7 +81,7 @@ class Controller
     }
 }
 ```
-```
+```php
 class FileRepository implements RepositoryInterface
 {
     protected string $path;
@@ -92,18 +92,24 @@ class FileRepository implements RepositoryInterface
     }
 }
 ```
-There ara several ways to realize that:
-1. Bind `FileRepository::class` to `RepositoryInterface::class` so than some class depends on `RepositoryInterface`
+Now we bind `FileRepository::class` to `RepositoryInterface::class` so than some class depends on `RepositoryInterface`
 it will be resolved to `FileRepository` and `path` argument will be passed into with specified value.
-```
+```php
 $container->bind(RepositoryInterface::class, FileRepository::class, ['path'=>'/data/storage']);
 
 $controller = $container->make(Controller::class);
 ```
 
-## Bind
-
 ## Singleton
+The singleton method binds a class or interface into the container that should be resolved once. First time it
+will be resolved and stored in the container, so other times the same object instance will be returned 
+on subsequent calls into the container.
+```php
+$container->singleton(RepositoryInterface::class, FileRepository::class, ['path'=>'/data/storage']);
+
+// Each time when RepositoryInterface needs to be resolved the instance of FileRepository will be given.
+$controller = $container->make(RepositoryInterface::class);
+```
 
 ## Alias
 
