@@ -282,6 +282,24 @@ class ContainerTest extends TestCase
     }
 
     /**
+     * Bind via closure with parameters.
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    public function testGetBoundViaClosureAndAliasMakeWithParameters(): void
+    {
+        /** @var Fixture $fixture */
+        $container = new Container;
+        $container->bind('fixture', static function (Container $container, $parameters) {
+            return new Fixture($container->make(Dependency::class, $parameters));
+        });
+        $container->alias('fixture', 'fix');
+        $fixture = $container->make('fix', ['info' => 'test']);
+        self::assertEquals('test', $fixture->dependency->info);
+    }
+
+    /**
      * Bind trough alias.
      *
      * @throws ContainerException
