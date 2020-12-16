@@ -90,7 +90,7 @@ class ContainerTest extends TestCase
         $container = new Container;
         $container->alias('fixture', 'fixture');
         $this->expectException(ContainerException::class);
-        $fixture = $container->get('fixture');
+        $container->get('fixture');
     }
 
     public function testInstance(): void
