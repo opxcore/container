@@ -107,7 +107,7 @@ class FileRepository implements RepositoryInterface
 }
 ```
 
-Now we bind `FileRepository::class` to `RepositoryInterface::class` so than some class depends on `RepositoryInterface`
+Now we bind `FileRepository::class` to `RepositoryInterface::class` so when some class depends on `RepositoryInterface`
 it will be resolved to `FileRepository` and `path` argument will be passed into with specified value.
 
 ```php
@@ -121,10 +121,10 @@ $controller = $container->make(Controller::class);
 You can bind parameters into the container fo resolving. It can be used as primitives binding or class binding:
 
 ```php
-// Than FileRepository dependencies would be resolving, given value would be passed to `path` attribute.
+// When FileRepository dependencies would be resolving, given value would be passed to `path` attribute.
 $container->bindParameters(FileRepository::class, ['path' => '/data/storage']);
 
-// Than Controller would be resolved a FileRepository would be given as RepositoryInterface dependency.
+// When Controller would be resolved a FileRepository would be given as RepositoryInterface dependency.
 $container->bindParameters(Controller::class, [RepositoryInterface::class => FileRepository::class]);
 ```
 
@@ -170,10 +170,14 @@ $container->make(RepositoryInterface::class);
 
 # Resolving
 
-## make
+When resolving some name, you can pass parameters to `make()` function to attach it for resolving subject.
 
-order:
+```php
+$container->bind(RepositoryInterface::class, FileRepository::class);
+$container->make(RepositoryInterface::class, ['path'=>'/data/storage']);
+```
 
-1. Check for alias
-2. Check for instance
-3. Making
+## Sequence of making subject
+
+When resolving some subject, the container checks for registered aliases first, checks for registered instances and
+resolves using reflections.
