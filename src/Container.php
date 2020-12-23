@@ -283,7 +283,9 @@ class Container implements ContainerInterface
         // We're ready to instantiate an instance of the concrete type registered for
         // the binding. This will instantiate the types, as well as resolve any of
         // its "nested" dependencies recursively until all have gotten resolved.
-        $object = $this->canBuild($concrete, $abstract) ? $this->build($concrete, $parameters) : $this->make($concrete);
+        $object = $this->canBuild($concrete, $abstract)
+            ? $this->build($concrete, $parameters)
+            : $this->make($concrete);
 
         // If the requested type is registered as a singleton we'll want to cache off
         // the instances in "memory" so we can return it later without creating an
