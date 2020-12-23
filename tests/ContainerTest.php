@@ -424,4 +424,21 @@ class ContainerTest extends TestCase
         $fixture = $container->get('fixture');
         self::assertEquals('singleton test', $fixture->dependency->info);
     }
+
+    /**
+     * Test not enough constructor parameters
+     *
+     * @throws NotFoundException
+     */
+    public function testNotEnoughParameters(): void
+    {
+        $container = new Container;
+        $container->bind('test', function () {
+            return new DependencyHard;
+        });
+
+        $this->expectException(ContainerException::class);
+
+        $container->make('test');
+    }
 }

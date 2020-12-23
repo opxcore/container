@@ -10,6 +10,7 @@
 
 namespace OpxCore\Container;
 
+use Error;
 use OpxCore\Container\Exceptions\ContainerException;
 use OpxCore\Container\Exceptions\NotFoundException;
 use OpxCore\Container\Interfaces\ContainerInterface;
@@ -397,7 +398,13 @@ class Container implements ContainerInterface
         // If the concrete type is a Closure, we will just execute it and return
         // back the result.
         if (is_callable($concrete)) {
-            return $concrete($this, $parameters);
+            try{
+                $resolved = $concrete($this, $parameters);
+            } catch (Error $e) {
+                throw new ContainerException($e->getMessage(), 0, $e);
+            }
+
+            return $resolved;
         }
 
         try {
